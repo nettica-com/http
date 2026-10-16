@@ -20,28 +20,26 @@ if (project.hasProperty('dart-defines')) {
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+
+// AGP 9 builds Kotlin itself and refuses a second 'kotlin' extension.
+def agpMajor = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')[0].toInteger()
+if (agpMajor < 9) {
+    apply plugin: 'kotlin-android'
+}
 
 android {
-    // Conditional for compatibility with AGP <4.2.
-    if (project.android.hasProperty("namespace")) {
-        namespace 'io.flutter.plugins.cronet_http'
-    }
+    namespace = 'io.flutter.plugins.cronet_http'
 
-    // package:jni requires compileSdkVersion 35
-    compileSdkVersion 35
+    // package:jni requires compileSdkVersion 35. AGP 9 reads only the new DSL.
+    compileSdk = 35
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = '11'
-    }
-
     sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
+        main.kotlin.srcDirs += 'src/main/kotlin'
     }
 
     defaultConfig {
@@ -49,7 +47,7 @@ android {
         // - .github/workflows/cronet.yml
         // - pkgs/cronet_http/android/build.gradle
         // - pkgs/cronet_http/example/android/app/build.gradle
-        minSdkVersion 24
+        minSdk = 24
     }
 
     defaultConfig {
@@ -59,6 +57,14 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+        }
+    }
+}
+
+if (project.extensions.findByName('kotlin')) {
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
         }
     }
 }
